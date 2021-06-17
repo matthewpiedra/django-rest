@@ -28,12 +28,11 @@ class AirplaneViewSet(viewsets.ModelViewSet):
 
         airplanes = Airplane.objects.all()
         
-        if s is not None:
+        if s:
             airplanes = Airplane.objects.filter(status__status=s)
             return airplanes
-        elif s is None:
-            # Just 
-            return airplanes
+     
+        return airplanes
 
     def create(self, request, *args, **kargs):
         a_data = request.data  
