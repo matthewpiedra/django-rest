@@ -49,6 +49,10 @@ INSTALLED_APPS = [
     'api_basics',
 ]
 
+# REST_FRAMEWORK = {
+#     'EXCEPTION_HANDLER': 'my_project.my_app.utils.custom_exception_handler'
+# }
+
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',

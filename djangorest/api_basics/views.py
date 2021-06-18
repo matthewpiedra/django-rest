@@ -1,4 +1,3 @@
-from typing import final
 from django.shortcuts import render
 from rest_framework.serializers import Serializer
 from .serializers import AirplaneSerializer, StatusSerializer
@@ -7,6 +6,7 @@ from rest_framework import views, viewsets
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
 from rest_framework.reverse import reverse
+from rest_framework.exceptions import NotFound
 
 # Create your views here.
 
@@ -29,7 +29,11 @@ class AirplaneViewSet(viewsets.ModelViewSet):
         airplanes = Airplanes.objects.all()
         
         if s:
+            if s != 'status':
+                return airplanes
+
             airplanes = Airplanes.objects.filter(status__status=s)
+
             return airplanes
      
         return airplanes
@@ -45,7 +49,6 @@ class AirplaneViewSet(viewsets.ModelViewSet):
             status=AirplaneStatus.objects.get(status=a_data['status'])
         )
 
-        print(new_airplane)
         serializer = AirplaneSerializer(new_airplane, context={'request': request})
         
         return Response(serializer.data)
