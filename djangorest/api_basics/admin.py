@@ -1,7 +1,7 @@
 from django.contrib import admin
-from .models import Airplane, Status
+from .models import Airplanes, AirplaneStatus
 
 # Register your models here.
 
 
-admin.site.register([Airplane, Status])
+admin.site.register([Airplanes, AirplaneStatus])

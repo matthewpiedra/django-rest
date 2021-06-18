@@ -2,7 +2,7 @@ from typing import final
 from django.shortcuts import render
 from rest_framework.serializers import Serializer
 from .serializers import AirplaneSerializer, StatusSerializer
-from .models import Airplane, Status
+from .models import Airplanes, AirplaneStatus
 from rest_framework import views, viewsets
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
@@ -26,10 +26,10 @@ class AirplaneViewSet(viewsets.ModelViewSet):
         req = self.request
         s = req.query_params.get('status')
 
-        airplanes = Airplane.objects.all()
+        airplanes = Airplanes.objects.all()
         
         if s:
-            airplanes = Airplane.objects.filter(status__status=s)
+            airplanes = Airplanes.objects.filter(status__status=s)
             return airplanes
      
         return airplanes
@@ -37,14 +37,15 @@ class AirplaneViewSet(viewsets.ModelViewSet):
     def create(self, request, *args, **kargs):
         a_data = request.data  
 
-        new_airplane = Airplane.objects.create(
+        new_airplane = Airplanes.objects.create(
             model=a_data['model'],
             range=a_data['range'],
             engines=a_data['engines'],
             capacity=a_data['capacity'],
-            status=Status.objects.get(status=a_data['status'])
+            status=AirplaneStatus.objects.get(status=a_data['status'])
         )
 
+        print(new_airplane)
         serializer = AirplaneSerializer(new_airplane, context={'request': request})
         
         return Response(serializer.data)
@@ -59,9 +60,9 @@ class AirplaneViewSet(viewsets.ModelViewSet):
         elif changed_data['status'] != 'ACTIVE' and changed_data['status'] != 'RETIRED' and changed_data['status'] != 'BROKEN' and changed_data['status'] != 'NEW':
             pk = int(changed_data['status'].split('/')[-2]) # get id from end of hyperlink url
             
-            status = Status.objects.get(pk=pk)
+            status = AirplaneStatus.objects.get(pk=pk)
         else:
-            status = Status.objects.get(status=changed_data['status'])
+            status = AirplaneStatus.objects.get(status=changed_data['status'])
         
         airplane_object.status = status
         airplane_object.model = changed_data['model'] if 'model' in changed_data and changed_data['model'] != '' else airplane_object.model
@@ -76,5 +77,5 @@ class AirplaneViewSet(viewsets.ModelViewSet):
         
 
 class StatusViewSet(viewsets.ModelViewSet):
-    queryset = Status.objects.all()
+    queryset = AirplaneStatus.objects.all()
     serializer_class = StatusSerializer
