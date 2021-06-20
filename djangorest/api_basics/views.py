@@ -6,7 +6,8 @@ from rest_framework import views, viewsets
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
 from rest_framework.reverse import reverse
-from rest_framework.exceptions import NotFound
+from rest_framework.exceptions import NotFound, ParseError
+from urllib.parse import urlparse, parse_qs
 
 # Create your views here.
 
@@ -26,27 +27,41 @@ class AirplaneViewSet(viewsets.ModelViewSet):
         req = self.request
         s = req.query_params.get('status')
 
+        raw_parameters = urlparse(req.get_full_path())
+        parameters = parse_qs(raw_parameters.query)
+
         airplanes = Airplanes.objects.all()
         
-        if s:
-            if s != 'status':
-                return airplanes
+        if len(parameters.items()) == 1: # only expecting one parameter
+            if 'status' not in parameters: # only expecting the status parameter
+                raise NotFound("Invalid Parameter")
+            elif s != 'ACTIVE' and s != 'RETIRED' and s != 'BROKEN' and s != 'NEW':
+                raise NotFound('Invalid value for status. Try again with either ACTIVE, RETIRED, NEW, or BROKEN')
 
             airplanes = Airplanes.objects.filter(status__status=s)
 
             return airplanes
+        elif len(parameters.items()) > 1: # if there's more than one param, then it's automaticaly invalid
+            raise NotFound('Only expecting one paramater: status')
      
         return airplanes
 
     def create(self, request, *args, **kargs):
-        a_data = request.data  
+        a_data = request.data
+
+        status = a_data['status']
+
+        if not isinstance(status, str):
+            raise ParseError("Invalid field type for status")
+        elif not AirplaneStatus.objects.filter(status=status).exists():
+            raise ParseError("Invalid field value for status")
 
         new_airplane = Airplanes.objects.create(
             model=a_data['model'],
             range=a_data['range'],
             engines=a_data['engines'],
             capacity=a_data['capacity'],
-            status=AirplaneStatus.objects.get(status=a_data['status'])
+            status=AirplaneStatus.objects.get(status=status)
         )
 
         serializer = AirplaneSerializer(new_airplane, context={'request': request})
@@ -57,13 +72,11 @@ class AirplaneViewSet(viewsets.ModelViewSet):
         airplane_object = self.get_object() # previous object data
 
         changed_data = request.data
-        
+
         if 'status' not in changed_data or changed_data['status'] == '':
             status = airplane_object.status
         elif changed_data['status'] != 'ACTIVE' and changed_data['status'] != 'RETIRED' and changed_data['status'] != 'BROKEN' and changed_data['status'] != 'NEW':
-            pk = int(changed_data['status'].split('/')[-2]) # get id from end of hyperlink url
-            
-            status = AirplaneStatus.objects.get(pk=pk)
+            raise ParseError("Invalid value for status")
         else:
             status = AirplaneStatus.objects.get(status=changed_data['status'])
         

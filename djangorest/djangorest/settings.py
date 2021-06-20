@@ -133,6 +133,9 @@ USE_L10N = True
 
 USE_TZ = True
 
+REST_FRAMEWORK = {
+    'EXCEPTION_HANDLER': 'utils.exceptionhandler.custom_exception_handler',
+}
 
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/3.1/howto/static-files/
